@@ -1,0 +1,15 @@
+{
+  "name": "wombo",
+  "version": "0.0.1",
+  "description": "A basic parser combinator library. Made as a library for my CS260 class",
+  "main": "src/index.ts",
+  "author": "Andrew Slade",
+  "license": "MIT",
+  "devDependencies": {
+    "@eslint/js": "^9.9.1",
+    "eslint": "^9.9.1",
+    "globals": "^15.9.0",
+    "typescript": "^5.5.4",
+    "typescript-eslint": "^8.4.0"
+  }
+}
