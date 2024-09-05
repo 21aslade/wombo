@@ -13,16 +13,16 @@ describe("PResult", () => {
     })
 
     test("require Ok", () => {
-        expect(PResult.require(Result.ok([0, 0]))).toEqual(Result.ok([0, 0]));
+        expect(PResult.require(Result.ok([0, 0]), "")).toEqual(Result.ok([0, 0]));
     })
 
     test("require Err(Ok)", () => {
-        expect(PResult.require(PResult.expected("a"))).toEqual(Result.err(Result.err(new Set(["a"]))));
+        expect(PResult.require(PResult.expected("a"), "next")).toEqual(Result.err(Result.err([new Set(["a"]), "next"])));
     })
 
     test("require Err(Err)", () => {
-        const result = PResult.require(PResult.expected("a"));
-        expect(PResult.require(result)).toEqual(Result.err(Result.err(new Set(["a"]))));
+        const result = PResult.require(PResult.expected("a"), "first");
+        expect(PResult.require(result, "second")).toEqual(Result.err(Result.err([new Set(["a"]), "first"])));
     })
 })
 
@@ -116,7 +116,7 @@ describe("pair", () => {
 
     it("doesn't match just first", () => {
         const parser = pair(tag("abc"), uint);
-        expect(parser("abcnnn")).toEqual(PResult.require(PResult.expected("nonnegative integer")));
+        expect(parser("abcnnn")).toEqual(PResult.require(PResult.expected("nonnegative integer"), "nnn"));
     })
 
     it("doesn't match just second", () => {

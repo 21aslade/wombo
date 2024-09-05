@@ -1,6 +1,6 @@
 import { Result } from "./result";
 
-export type PError = Result<Set<string>, Set<string>>;
+export type PError = Result<Set<string>, [Set<string>, string]>;
 
 export type PResult<T> = Result<[T, number], PError>;
 export const PResult = {
@@ -10,13 +10,13 @@ export const PResult = {
     expected(expected: string): PResult<never> {
         return Result.err(Result.ok(new Set([expected])))
     },
-    require<T>(main: PResult<T>): PResult<T> {
+    require<T>(main: PResult<T>, remaining: string): PResult<T> {
         if (main.isErr() && main.error.isOk()) {
-            return Result.err(Result.err(main.error.value));
+            return Result.err(Result.err([main.error.value, remaining]));
         } else {
             return main;
         }
-    }
+    },
 } as const;
 
 type Parser<T> = (s: string) => PResult<T>;
@@ -114,5 +114,5 @@ export function pair<A, B>(a: Parser<A>, b: Parser<B>): Parser<[A, B]> {
 }
 
 export function required<T>(p: Parser<T>): Parser<T> {
-    return (s) => PResult.require(p(s));
+    return (s) => PResult.require(p(s), s);
 }
