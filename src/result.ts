@@ -34,6 +34,10 @@ class Ok<T, E> implements ResultBase<T, E> {
         this.value = t;
     }
 
+    castErr<U>(): Ok<T, U> {
+        return this as Ok<T, unknown> as Ok<T, U>;
+    }
+
     isOk(): this is Ok<T, E> {
         return true;
     }
@@ -71,7 +75,7 @@ class Err<T, E> implements ResultBase<T, E> {
         this.error = e;
     }
 
-    #castOk<U>(): Err<U, E> {
+    castOk<U>(): Err<U, E> {
         return this as Err<unknown, E> as Err<U, E>;
     }
 
@@ -84,15 +88,15 @@ class Err<T, E> implements ResultBase<T, E> {
     }
 
     map<U>(f: (t: T) => U): Result<U, E> {
-        return this.#castOk();
+        return this.castOk();
     }
 
     and<U>(r: Result<U, E>): Err<U, E> {
-        return this.#castOk();
+        return this.castOk();
     }
     
     andThen<U>(f: (t: T) => Result<U, E>): Err<U, E> {
-        return this.#castOk();
+        return this.castOk();
     }
 
     or<U>(r: Result<U, E>): Result<U, E> {
