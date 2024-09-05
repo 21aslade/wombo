@@ -1,6 +1,17 @@
-import { describe, it, expect } from "@jest/globals";
-import { many0, many1, tag, uint } from ".";
+import { describe, it, test, expect } from "@jest/globals";
+import { many0, many1, PResult, tag, uint } from ".";
 import { Result } from "typescript-result";
+
+describe("PResult", () => {
+    test("map works", () => {
+        const result: PResult<string> = Result.ok(["300", 4]);
+        expect(PResult.map(result, (s) => parseInt(s))).toEqual(Result.ok([300, 4]));
+    })
+
+    test("expected works", () => {
+        expect(PResult.expected("string")).toEqual(Result.error(new Set(["string"])));
+    })
+})
 
 describe("tag", () => {
     it("matches tag value", () => {

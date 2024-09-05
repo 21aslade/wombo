@@ -1,9 +1,9 @@
 import { Result } from "typescript-result";
 
-type PError = Set<string>;
+export type PError = Set<string>;
 
-type PResult<T> = Result<[T, number], PError>;
-const PResult = {
+export type PResult<T> = Result<[T, number], PError>;
+export const PResult = {
     map<T, U>(r: PResult<T>, f: (t: T) => U): PResult<U> {
         return r.map(([t, n]) => [f(t), n]);
     },
