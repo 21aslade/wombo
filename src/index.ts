@@ -4,6 +4,9 @@ type PError = Set<string>;
 
 type PResult<T> = Result<[T, number], PError>;
 const PResult = {
+    map<T, U>(r: PResult<T>, f: (t: T) => U): PResult<U> {
+        return r.map(([t, n]) => [f(t), n]);
+    },
     expected(expected: string): PResult<never> {
         return Result.error(new Set([expected]))
     }
@@ -48,3 +51,39 @@ export const uint: Parser<number> = (s: string) => {
     const parsed = parseInt(numeric);
     return Result.ok([parsed, len]);
 };
+
+export function many0<T>(p: Parser<T>): Parser<T[]> {
+    return (s: string) => {
+        let remaining = s;
+        let results = [];
+        do {
+            const result = p(remaining);
+            if (!result.isOk()) {
+                break;
+            }
+
+            const [t, len] = result.value;
+            remaining = remaining.slice(len);
+            results.push(t);
+        } while(remaining.length > 0);
+
+        return Result.ok([results, s.length - remaining.length]);
+    };
+}
+
+export function many1<T>(p: Parser<T>): Parser<T[]> {
+    return (s: string) => {
+        const matches = many0(p)(s);
+
+        if (matches.isOk()) {
+            const [results] = matches.value;
+
+            if (results.length <= 0) {
+                // always an error
+                return PResult.map(p(s), (_) => []);
+            }
+        }
+
+        return matches;
+    };
+}

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "@jest/globals";
-import { tag, uint } from ".";
+import { many0, many1, tag, uint } from ".";
 import { Result } from "typescript-result";
 
 describe("tag", () => {
@@ -37,5 +37,49 @@ describe("uint", () => {
 
     it("doesn't match whitespace", () => {
         expect(uint(" 123")).toEqual(Result.error(new Set(["nonnegative integer"])));
+    })
+})
+
+describe("many0", () => {
+    it("matches zero", () => {
+        const parser = many0(tag("a"));
+        expect(parser("not a")).toEqual(Result.ok([[], 0]));
+    })
+
+    it("matches one", () => {
+        const parser = many0(tag("a"));
+        expect(parser("abc")).toEqual(Result.ok([["a"], 1]));
+    })
+
+    it("matches three", () => {
+        const parser = many0(tag("a"));
+        expect(parser("aaab")).toEqual(Result.ok([["a", "a", "a"], 3]));
+    })
+
+    it("doesn't match break", () => {
+        const parser = many0(tag("a"));
+        expect(parser("aaba")).toEqual(Result.ok([["a", "a"], 2]));
+    })
+})
+
+describe("many1", () => {
+    it("doesn't match zero", () => {
+        const parser = many1(tag("a"));
+        expect(parser("not a")).toEqual(Result.error(new Set(["a"])));
+    })
+
+    it("matches one", () => {
+        const parser = many1(tag("a"));
+        expect(parser("abc")).toEqual(Result.ok([["a"], 1]));
+    })
+
+    it("matches three", () => {
+        const parser = many1(tag("a"));
+        expect(parser("aaab")).toEqual(Result.ok([["a", "a", "a"], 3]));
+    })
+
+    it("doesn't match break", () => {
+        const parser = many1(tag("a"));
+        expect(parser("aaba")).toEqual(Result.ok([["a", "a"], 2]));
     })
 })
