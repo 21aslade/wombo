@@ -1,6 +1,6 @@
 import { Result } from "./result";
 
-export type PError = Set<string>;
+export type PError = Result<Set<string>, Set<string>>;
 
 export type PResult<T> = Result<[T, number], PError>;
 export const PResult = {
@@ -8,9 +8,16 @@ export const PResult = {
         return r.map(([t, n]) => [f(t), n]);
     },
     expected(expected: string): PResult<never> {
-        return Result.err(new Set([expected]))
+        return Result.err(Result.ok(new Set([expected])))
+    },
+    require<T>(main: PResult<T>): PResult<T> {
+        if (main.isErr() && main.error.isOk()) {
+            return Result.err(Result.err(main.error.value));
+        } else {
+            return main;
+        }
     }
-}
+} as const;
 
 type Parser<T> = (s: string) => PResult<T>;
 
@@ -59,7 +66,11 @@ export function many0<T>(p: Parser<T>): Parser<T[]> {
         do {
             const result = p(remaining);
             if (result.isErr()) {
-                break;
+                if (result.error.isErr()) {
+                    return result.castOk();
+                } else {
+                    break;
+                }
             }
 
             const [t, len] = result.value;
@@ -98,6 +109,10 @@ export function pair<A, B>(a: Parser<A>, b: Parser<B>): Parser<[A, B]> {
         const [aVal, aLen] = aResult.value;
         const remaining = s.slice(aLen);
 
-        return b(remaining).map(([bVal, bLen]) => [[aVal, bVal], aLen + bLen])
+        return required(b)(remaining).map(([bVal, bLen]) => [[aVal, bVal], aLen + bLen]);
     };
+}
+
+export function required<T>(p: Parser<T>): Parser<T> {
+    return (s) => PResult.require(p(s));
 }

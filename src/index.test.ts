@@ -9,7 +9,20 @@ describe("PResult", () => {
     })
 
     test("expected works", () => {
-        expect(PResult.expected("string")).toEqual(Result.err(new Set(["string"])));
+        expect(PResult.expected("string")).toEqual(PResult.expected("string"));
+    })
+
+    test("require Ok", () => {
+        expect(PResult.require(Result.ok([0, 0]))).toEqual(Result.ok([0, 0]));
+    })
+
+    test("require Err(Ok)", () => {
+        expect(PResult.require(PResult.expected("a"))).toEqual(Result.err(Result.err(new Set(["a"]))));
+    })
+
+    test("require Err(Err)", () => {
+        const result = PResult.require(PResult.expected("a"));
+        expect(PResult.require(result)).toEqual(Result.err(Result.err(new Set(["a"]))));
     })
 })
 
@@ -21,7 +34,7 @@ describe("tag", () => {
 
     it("doesn't match mid-string", () => {
         const parser = tag("bcd");
-        expect(parser("abcde")).toEqual(Result.err(new Set(["bcd"])));
+        expect(parser("abcde")).toEqual(PResult.expected("bcd"));
     })
 })
 
@@ -39,15 +52,15 @@ describe("uint", () => {
     })
 
     it("doesn't match negative", () => {
-        expect(uint("-5")).toEqual(Result.err(new Set(["nonnegative integer"])));
+        expect(uint("-5")).toEqual(PResult.expected("nonnegative integer"));
     })
 
     it("doesn't match zero prefix", () => {
-        expect(uint("0123")).toEqual(Result.err(new Set(["nonnegative integer"])));
+        expect(uint("0123")).toEqual(PResult.expected("nonnegative integer"));
     })
 
     it("doesn't match whitespace", () => {
-        expect(uint(" 123")).toEqual(Result.err(new Set(["nonnegative integer"])));
+        expect(uint(" 123")).toEqual(PResult.expected("nonnegative integer"));
     })
 })
 
@@ -76,7 +89,7 @@ describe("many0", () => {
 describe("many1", () => {
     it("doesn't match zero", () => {
         const parser = many1(tag("a"));
-        expect(parser("not a")).toEqual(Result.err(new Set(["a"])));
+        expect(parser("not a")).toEqual(PResult.expected("a"));
     })
 
     it("matches one", () => {
@@ -103,11 +116,11 @@ describe("pair", () => {
 
     it("doesn't match just first", () => {
         const parser = pair(tag("abc"), uint);
-        expect(parser("abcnnn")).toEqual(Result.err(new Set(["nonnegative integer"])));
+        expect(parser("abcnnn")).toEqual(PResult.require(PResult.expected("nonnegative integer")));
     })
 
     it("doesn't match just second", () => {
         const parser = pair(tag("abc"), uint);
-        expect(parser("123nnn")).toEqual(Result.err(new Set(["abc"])));
+        expect(parser("123nnn")).toEqual(PResult.expected("abc"));
     })
 })
