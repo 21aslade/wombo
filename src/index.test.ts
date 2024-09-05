@@ -1,6 +1,6 @@
 import { describe, it, test, expect } from "@jest/globals";
 import { many0, many1, pair, PResult, tag, uint } from ".";
-import { Result } from "./result.js";
+import { Result } from "./result";
 
 describe("PResult", () => {
     test("map works", () => {

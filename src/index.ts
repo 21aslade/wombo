@@ -1,4 +1,4 @@
-import { Result } from "./result.js";
+import { Result } from "./result";
 
 export type PError = Set<string>;
 
