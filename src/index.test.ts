@@ -1,5 +1,5 @@
 import { describe, it, test, expect } from "@jest/globals";
-import { many0, many1, PResult, tag, uint } from ".";
+import { many0, many1, pair, PResult, tag, uint } from ".";
 import { Result } from "typescript-result";
 
 describe("PResult", () => {
@@ -92,5 +92,22 @@ describe("many1", () => {
     it("doesn't match break", () => {
         const parser = many1(tag("a"));
         expect(parser("aaba")).toEqual(Result.ok([["a", "a"], 2]));
+    })
+})
+
+describe("pair", () => {
+    it("matches pair", () => {
+        const parser = pair(tag("abc"), uint);
+        expect(parser("abc123nnn")).toEqual(Result.ok([["abc", 123], 6]));
+    })
+
+    it("doesn't match just first", () => {
+        const parser = pair(tag("abc"), uint);
+        expect(parser("abcnnn")).toEqual(Result.error(new Set(["nonnegative integer"])));
+    })
+
+    it("doesn't match just second", () => {
+        const parser = pair(tag("abc"), uint);
+        expect(parser("123nnn")).toEqual(Result.error(new Set(["abc"])));
     })
 })

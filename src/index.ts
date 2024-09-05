@@ -87,3 +87,17 @@ export function many1<T>(p: Parser<T>): Parser<T[]> {
         return matches;
     };
 }
+
+export function pair<A, B>(a: Parser<A>, b: Parser<B>): Parser<[A, B]> {
+    return (s) => {
+        const aResult = a(s);
+        if (!aResult.isOk()) {
+            return Result.error(aResult.error!!);
+        }
+
+        const [aVal, aLen] = aResult.value;
+        const remaining = s.slice(aLen);
+
+        return b(remaining).map(([bVal, bLen]) => [[aVal, bVal], aLen + bLen])
+    };
+}
