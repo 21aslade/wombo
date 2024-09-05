@@ -1,4 +1,4 @@
-import { Result } from "typescript-result";
+import { Result } from "./result.js";
 
 export type PError = Set<string>;
 
@@ -8,7 +8,7 @@ export const PResult = {
         return r.map(([t, n]) => [f(t), n]);
     },
     expected(expected: string): PResult<never> {
-        return Result.error(new Set([expected]))
+        return Result.err(new Set([expected]))
     }
 }
 
@@ -58,7 +58,7 @@ export function many0<T>(p: Parser<T>): Parser<T[]> {
         let results = [];
         do {
             const result = p(remaining);
-            if (!result.isOk()) {
+            if (result.isErr()) {
                 break;
             }
 
@@ -91,8 +91,8 @@ export function many1<T>(p: Parser<T>): Parser<T[]> {
 export function pair<A, B>(a: Parser<A>, b: Parser<B>): Parser<[A, B]> {
     return (s) => {
         const aResult = a(s);
-        if (!aResult.isOk()) {
-            return Result.error(aResult.error!!);
+        if (aResult.isErr()) {
+            return Result.err(aResult.error);
         }
 
         const [aVal, aLen] = aResult.value;
