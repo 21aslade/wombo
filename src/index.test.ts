@@ -27,14 +27,13 @@ describe("PResult", () => {
 })
 
 describe("tag", () => {
+    const parser = tag("abc");
     it("matches tag value", () => {
-        const parser = tag("abc");
         expect(parser("abcde")).toEqual(Result.ok(["abc", 3]));
     });
 
     it("doesn't match mid-string", () => {
-        const parser = tag("bcd");
-        expect(parser("abcde")).toEqual(PResult.expected("bcd"));
+        expect(parser("deabc")).toEqual(PResult.expected("abc"));
     })
 })
 
@@ -65,85 +64,73 @@ describe("uint", () => {
 })
 
 describe("many0", () => {
+    const parser = many0(tag("a"));
     it("matches zero", () => {
-        const parser = many0(tag("a"));
         expect(parser("not a")).toEqual(Result.ok([[], 0]));
     })
 
     it("matches one", () => {
-        const parser = many0(tag("a"));
         expect(parser("abc")).toEqual(Result.ok([["a"], 1]));
     })
 
     it("matches three", () => {
-        const parser = many0(tag("a"));
         expect(parser("aaab")).toEqual(Result.ok([["a", "a", "a"], 3]));
     })
 
     it("doesn't match break", () => {
-        const parser = many0(tag("a"));
         expect(parser("aaba")).toEqual(Result.ok([["a", "a"], 2]));
     })
 })
 
 describe("many1", () => {
+    const parser = many1(tag("a"));
     it("doesn't match zero", () => {
-        const parser = many1(tag("a"));
         expect(parser("not a")).toEqual(PResult.expected("a"));
     })
 
     it("matches one", () => {
-        const parser = many1(tag("a"));
         expect(parser("abc")).toEqual(Result.ok([["a"], 1]));
     })
 
     it("matches three", () => {
-        const parser = many1(tag("a"));
         expect(parser("aaab")).toEqual(Result.ok([["a", "a", "a"], 3]));
     })
 
     it("doesn't match break", () => {
-        const parser = many1(tag("a"));
         expect(parser("aaba")).toEqual(Result.ok([["a", "a"], 2]));
     })
 })
 
 describe("pair", () => {
+    const parser = pair(tag("abc"), uint);
     it("matches pair", () => {
-        const parser = pair(tag("abc"), uint);
         expect(parser("abc123nnn")).toEqual(Result.ok([["abc", 123], 6]));
     })
 
     it("doesn't match just first", () => {
-        const parser = pair(tag("abc"), uint);
         expect(parser("abcnnn")).toEqual(PResult.require(PResult.expected("nonnegative integer"), "nnn"));
     })
 
     it("doesn't match just second", () => {
-        const parser = pair(tag("abc"), uint);
         expect(parser("123nnn")).toEqual(PResult.expected("abc"));
     })
 })
 
 describe("completed", () => {
+    const parser = completed(pair(tag("a"), tag("bc")));
     it("parses entire string", () => {
-        
-        const parser = completed(pair(tag("a"), tag("bc")));
         expect(parser("abc")).toEqual(Result.ok(["a", "bc"]));
     })
 
     it("fails on parser fail", () => {
-        const parser = completed(pair(tag("a"), tag("bc")));
         expect(parser("not abc")).toEqual(Result.err([new Set(["a"]), "not abc"]));
     })
 
     it("fails on incomplete parse", () => {
-        const parser = completed(pair(tag("a"), tag("bc")));
         expect(parser("abcn")).toEqual(Result.err([new Set(["EOF"]), "n"]));
     })
 
     it("fails on required", () => {
-        const parser = completed(pair(tag("a"), tag("bc")));
         expect(parser("ab")).toEqual(Result.err([new Set(["bc"]), "b"]));
     })
 })
