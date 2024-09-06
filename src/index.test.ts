@@ -1,5 +1,15 @@
 import { describe, it, test, expect } from "@jest/globals";
-import { completed, many0, many1, pair, PResult, regex, tag, uint } from ".";
+import {
+    completed,
+    many0,
+    many1,
+    pair,
+    PResult,
+    regex,
+    tag,
+    uint,
+    expect as expectParser,
+} from ".";
 import { Result } from "./result";
 
 describe("PResult", () => {
@@ -149,5 +159,12 @@ describe("regex", () => {
 
     it("only matches at beginning", () => {
         expect(parser(" ab")).toEqual(PResult.expected("/ab+c?/"));
+    });
+});
+
+describe("expected", () => {
+    it("works", () => {
+        const parser = expectParser(tag("abc"), "not abc");
+        expect(parser("a")).toEqual(PResult.expected("not abc"));
     });
 });

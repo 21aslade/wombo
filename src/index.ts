@@ -147,3 +147,14 @@ export function regex(r: RegExp): Parser<string> {
         return Result.ok([result[0], result[0].length]);
     };
 }
+
+export function expect<T>(p: Parser<T>, expected: string): Parser<T> {
+    return (s) => {
+        const result = p(s);
+        if (result.isErr() && result.error.isOk()) {
+            return PResult.expected(expected);
+        }
+
+        return result;
+    };
+}
