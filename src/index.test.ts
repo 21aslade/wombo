@@ -9,6 +9,7 @@ import {
     tag,
     uint,
     expect as expectParser,
+    alt,
 } from ".";
 import { Result } from "./result";
 
@@ -166,5 +167,27 @@ describe("expected", () => {
     it("works", () => {
         const parser = expectParser(tag("abc"), "not abc");
         expect(parser("a")).toEqual(PResult.expected("not abc"));
+    });
+});
+
+describe("alt", () => {
+    const parser = alt(
+        pair(tag("a"), tag("b")),
+        pair(tag("b"), tag("c")),
+        pair(tag("c"), tag("d")),
+    );
+
+    it("matches any", () => {
+        expect(parser("ab")).toEqual(Result.ok([["a", "b"], 2]));
+        expect(parser("bc")).toEqual(Result.ok([["b", "c"], 2]));
+        expect(parser("cd")).toEqual(Result.ok([["c", "d"], 2]));
+    });
+
+    it("doesn't match something else", () => {
+        expect(parser("no")).toEqual(Result.err(Result.ok(new Set(["a", "b", "c"]))));
+    });
+
+    it("doesn't continue required", () => {
+        expect(parser("ac")).toEqual(PResult.require(PResult.expected("b"), "c"));
     });
 });

@@ -158,3 +158,19 @@ export function expect<T>(p: Parser<T>, expected: string): Parser<T> {
         return result;
     };
 }
+
+export function alt<T>(...parsers: Parser<T>[]): Parser<T> {
+    return (s) => {
+        let expected: Set<string> = new Set();
+        for (const parser of parsers) {
+            const result = parser(s);
+            if (result.isErr() && result.error.isOk()) {
+                result.error.value.forEach((s) => expected.add(s));
+            } else {
+                return result;
+            }
+        }
+
+        return Result.err(Result.ok(expected));
+    };
+}
