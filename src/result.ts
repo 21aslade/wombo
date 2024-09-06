@@ -12,7 +12,7 @@ export const Result = {
         } catch (e) {
             return Result.err(e);
         }
-    }
+    },
 } as const;
 
 interface ResultBase<T, E> {
@@ -94,7 +94,7 @@ class Err<T, E> implements ResultBase<T, E> {
     and<U>(r: Result<U, E>): Err<U, E> {
         return this.castOk();
     }
-    
+
     andThen<U>(f: (t: T) => Result<U, E>): Err<U, E> {
         return this.castOk();
     }

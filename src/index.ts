@@ -8,7 +8,7 @@ export const PResult = {
         return r.map(([t, n]) => [f(t), n]);
     },
     expected(expected: string): PResult<never> {
-        return Result.err(Result.ok(new Set([expected])))
+        return Result.err(Result.ok(new Set([expected])));
     },
     require<T>(main: PResult<T>, remaining: string): PResult<T> {
         if (main.isErr() && main.error.isOk()) {
@@ -32,11 +32,13 @@ export function tag(tag: string): Parser<string> {
 }
 
 function uintPrefixLen(s: string): number {
-    if (s[0] === "0") { return 0; }
+    if (s[0] === "0") {
+        return 0;
+    }
 
     let numberLength = 0;
     while (numberLength < s.length) {
-        const c = s[numberLength] ?? '';
+        const c = s[numberLength] ?? "";
         if (c < "0" || c > "9") {
             return numberLength;
         }
@@ -76,7 +78,7 @@ export function many0<T>(p: Parser<T>): Parser<T[]> {
             const [t, len] = result.value;
             remaining = remaining.slice(len);
             results.push(t);
-        } while(remaining.length > 0);
+        } while (remaining.length > 0);
 
         return Result.ok([results, s.length - remaining.length]);
     };
@@ -117,12 +119,14 @@ export function required<T>(p: Parser<T>): Parser<T> {
     return (s) => PResult.require(p(s), s);
 }
 
-export function completed<T>(p: Parser<T>): (s: string) => Result<T, [Set<string>, string]> {
+export function completed<T>(
+    p: Parser<T>,
+): (s: string) => Result<T, [Set<string>, string]> {
     return (s) => {
         const result = p(s);
         if (result.isOk()) {
             if (result.value[1] < s.length) {
-                return Result.err([new Set(["EOF"]), s.slice(result.value[1])])
+                return Result.err([new Set(["EOF"]), s.slice(result.value[1])]);
             }
             return Result.ok(result.value[0]);
         } else if (result.error.isOk()) {
