@@ -11,7 +11,7 @@ import {
     expect as expectParser,
     alt,
 } from ".";
-import { Result } from "./result";
+import { Result } from "./result.js";
 
 describe("PResult", () => {
     test("map works", () => {

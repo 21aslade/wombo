@@ -4,6 +4,7 @@
     "description": "A basic parser combinator library. Made as a library for my CS260 class",
     "main": "build/src/index.js",
     "types": "build/src/index.d.ts",
+    "type": "module",
     "author": "Andrew Slade",
     "license": "MIT",
     "scripts": {
