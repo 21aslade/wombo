@@ -136,3 +136,14 @@ export function completed<T>(
         }
     };
 }
+
+export function regex(r: RegExp): Parser<string> {
+    return (s) => {
+        const result = r.exec(s);
+        if (result === null || result.index !== 0) {
+            return PResult.expected(r.toString());
+        }
+
+        return Result.ok([result[0], result[0].length]);
+    };
+}
