@@ -2,11 +2,14 @@
     "name": "wombo",
     "version": "0.0.1",
     "description": "A basic parser combinator library. Made as a library for my CS260 class",
-    "main": "src/index.ts",
+    "main": "build/src/index.js",
+    "types": "build/src/index.d.ts",
     "author": "Andrew Slade",
     "license": "MIT",
     "scripts": {
-        "test": "jest"
+        "test": "jest",
+        "build": "tsc",
+        "prepublish": "build"
     },
     "devDependencies": {
         "@babel/core": "^7.25.2",
