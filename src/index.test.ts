@@ -1,5 +1,5 @@
 import { describe, it, test, expect } from "@jest/globals";
-import { many0, many1, pair, PResult, tag, uint } from ".";
+import { completed, many0, many1, pair, PResult, tag, uint } from ".";
 import { Result } from "./result";
 
 describe("PResult", () => {
@@ -122,5 +122,28 @@ describe("pair", () => {
     it("doesn't match just second", () => {
         const parser = pair(tag("abc"), uint);
         expect(parser("123nnn")).toEqual(PResult.expected("abc"));
+    })
+})
+
+describe("completed", () => {
+    it("parses entire string", () => {
+        
+        const parser = completed(pair(tag("a"), tag("bc")));
+        expect(parser("abc")).toEqual(Result.ok(["a", "bc"]));
+    })
+
+    it("fails on parser fail", () => {
+        const parser = completed(pair(tag("a"), tag("bc")));
+        expect(parser("not abc")).toEqual(Result.err([new Set(["a"]), "not abc"]));
+    })
+
+    it("fails on incomplete parse", () => {
+        const parser = completed(pair(tag("a"), tag("bc")));
+        expect(parser("abcn")).toEqual(Result.err([new Set(["EOF"]), "n"]));
+    })
+
+    it("fails on required", () => {
+        const parser = completed(pair(tag("a"), tag("bc")));
+        expect(parser("ab")).toEqual(Result.err([new Set(["bc"]), "b"]));
     })
 })

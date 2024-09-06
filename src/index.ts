@@ -116,3 +116,19 @@ export function pair<A, B>(a: Parser<A>, b: Parser<B>): Parser<[A, B]> {
 export function required<T>(p: Parser<T>): Parser<T> {
     return (s) => PResult.require(p(s), s);
 }
+
+export function completed<T>(p: Parser<T>): (s: string) => Result<T, [Set<string>, string]> {
+    return (s) => {
+        const result = p(s);
+        if (result.isOk()) {
+            if (result.value[1] < s.length) {
+                return Result.err([new Set(["EOF"]), s.slice(result.value[1])])
+            }
+            return Result.ok(result.value[0]);
+        } else if (result.error.isOk()) {
+            return Result.err([result.error.value, s]);
+        } else {
+            return result.error.castOk();
+        }
+    };
+}
