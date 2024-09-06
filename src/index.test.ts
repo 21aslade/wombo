@@ -10,7 +10,7 @@ import {
     uint,
     expect as expectParser,
     alt,
-} from ".";
+} from "./index.js";
 import { Result } from "./result.js";
 
 describe("PResult", () => {
