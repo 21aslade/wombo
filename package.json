@@ -8,7 +8,7 @@
     "author": "Andrew Slade",
     "license": "MIT",
     "scripts": {
-        "test": "jest",
+        "test": "tsc && jest",
         "build": "tsc",
         "prepublish": "build"
     },

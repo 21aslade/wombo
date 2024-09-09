@@ -10,8 +10,8 @@ import {
     uint,
     expect as expectParser,
     alt,
-} from "./index.js";
-import { Result } from "./result.js";
+} from "../dist/index.js";
+import { Result } from "../dist/result.js";
 
 describe("PResult", () => {
     test("map works", () => {
