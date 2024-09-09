@@ -34,6 +34,10 @@ class Ok<T, E> implements ResultBase<T, E> {
         this.value = t;
     }
 
+    toString(): string {
+        return `Ok(${this.value})`;
+    }
+
     castErr<U>(): Ok<T, U> {
         return this as Ok<T, unknown> as Ok<T, U>;
     }
@@ -73,6 +77,10 @@ class Err<T, E> implements ResultBase<T, E> {
 
     constructor(e: E) {
         this.error = e;
+    }
+
+    toString(): string {
+        return `Err(${this.value})`;
     }
 
     castOk<U>(): Err<U, E> {
