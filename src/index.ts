@@ -1,6 +1,7 @@
 import { Result } from "./result.js";
+import { ParseError } from "./error.js";
 
-export type PError = Result<Set<string>, [Set<string>, string]>;
+export type PError = Result<Set<string>, ParseError>;
 
 export type PResult<T> = Result<[T, number], PError>;
 export const PResult = {
@@ -12,7 +13,7 @@ export const PResult = {
     },
     require<T>(main: PResult<T>, remaining: string): PResult<T> {
         if (main.isErr() && main.error.isOk()) {
-            return Result.err(Result.err([main.error.value, remaining]));
+            return Result.err(Result.err(new ParseError(main.error.value, remaining)));
         } else {
             return main;
         }
@@ -119,18 +120,18 @@ export function required<T>(p: Parser<T>): Parser<T> {
     return (s) => PResult.require(p(s), s);
 }
 
-export function completed<T>(
-    p: Parser<T>,
-): (s: string) => Result<T, [Set<string>, string]> {
+export function completed<T>(p: Parser<T>): (s: string) => Result<T, ParseError> {
     return (s) => {
         const result = p(s);
         if (result.isOk()) {
             if (result.value[1] < s.length) {
-                return Result.err([new Set(["EOF"]), s.slice(result.value[1])]);
+                return Result.err(
+                    new ParseError(new Set(["EOF"]), s.slice(result.value[1])),
+                );
             }
             return Result.ok(result.value[0]);
         } else if (result.error.isOk()) {
-            return Result.err([result.error.value, s]);
+            return Result.err(new ParseError(result.error.value, s));
         } else {
             return result.error.castOk();
         }

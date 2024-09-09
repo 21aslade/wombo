@@ -12,6 +12,7 @@ import {
     alt,
 } from "../dist/index.js";
 import { Result } from "../dist/result.js";
+import { ParseError } from "../dist/error.js";
 
 describe("PResult", () => {
     test("map works", () => {
@@ -29,14 +30,14 @@ describe("PResult", () => {
 
     test("require Err(Ok)", () => {
         expect(PResult.require(PResult.expected("a"), "next")).toEqual(
-            Result.err(Result.err([new Set(["a"]), "next"])),
+            Result.err(Result.err(new ParseError(new Set(["a"]), "next"))),
         );
     });
 
     test("require Err(Err)", () => {
         const result = PResult.require(PResult.expected("a"), "first");
         expect(PResult.require(result, "second")).toEqual(
-            Result.err(Result.err([new Set(["a"]), "first"])),
+            Result.err(Result.err(new ParseError(new Set(["a"]), "first"))),
         );
     });
 });
@@ -140,15 +141,17 @@ describe("completed", () => {
     });
 
     it("fails on parser fail", () => {
-        expect(parser("not abc")).toEqual(Result.err([new Set(["a"]), "not abc"]));
+        expect(parser("not abc")).toEqual(
+            Result.err(new ParseError(new Set(["a"]), "not abc")),
+        );
     });
 
     it("fails on incomplete parse", () => {
-        expect(parser("abcn")).toEqual(Result.err([new Set(["EOF"]), "n"]));
+        expect(parser("abcn")).toEqual(Result.err(new ParseError(new Set(["EOF"]), "n")));
     });
 
     it("fails on required", () => {
-        expect(parser("ab")).toEqual(Result.err([new Set(["bc"]), "b"]));
+        expect(parser("ab")).toEqual(Result.err(new ParseError(new Set(["bc"]), "b")));
     });
 });
 
