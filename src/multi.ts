@@ -84,3 +84,32 @@ export function pair<A, B>(a: ParserFunction<A>, b: ParserFunction<B>): Parser<[
         return required(b)(remaining).map(([bVal, bLen]) => [[aVal, bVal], aLen + bLen]);
     });
 }
+
+export function separatedPair<A, S, B>(
+    a: ParserFunction<A>,
+    sep: ParserFunction<S>,
+    b: ParserFunction<B>,
+): Parser<[A, B]> {
+    return makeParser((s) => {
+        const aResult = a(s);
+        if (aResult.isErr()) {
+            return Result.err(aResult.error);
+        }
+
+        const [aVal, aLen] = aResult.value;
+        const aRemaining = s.slice(aLen);
+
+        const sepResult = required(sep)(aRemaining);
+        if (sepResult.isErr()) {
+            return sepResult.castOk();
+        }
+
+        const [_, sepLen] = sepResult.value;
+        const sepRemaining = aRemaining.slice(sepLen);
+
+        return required(b)(sepRemaining).map(([bVal, bLen]) => [
+            [aVal, bVal],
+            aLen + sepLen + bLen,
+        ]);
+    });
+}

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "@jest/globals";
-import { opt, alt, many0, many1, pair } from "../dist/multi.js";
+import { opt, alt, many0, many1, pair, separatedPair } from "../dist/multi.js";
 import { tag, uint } from "../dist/text";
 import { Result } from "../dist/result.js";
 import { Option } from "../dist/option.js";
@@ -73,6 +73,23 @@ describe("pair", () => {
 
     it("doesn't match just second", () => {
         expect(parser("123nnn")).toEqual(PResult.expected("abc"));
+    });
+});
+
+describe("separated pair", () => {
+    const parser = separatedPair(tag("a"), tag("b"), tag("c"));
+
+    it("matches all", () => {
+        expect(parser("abcn")).toEqual(Result.ok([["a", "c"], 3]));
+    });
+
+    it("doesn't match unrelated", () => {
+        expect(parser("noco")).toEqual(PResult.expected("a"));
+    });
+
+    it("fails partial", () => {
+        expect(parser("a")).toEqual(PResult.require(PResult.expected("b"), ""));
+        expect(parser("abn")).toEqual(PResult.require(PResult.expected("c"), "n"));
     });
 });
 
