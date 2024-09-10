@@ -90,26 +90,21 @@ export function separatedPair<A, S, B>(
     sep: ParserFunction<S>,
     b: ParserFunction<B>,
 ): Parser<[A, B]> {
-    return makeParser((s) => {
-        const aResult = a(s);
-        if (aResult.isErr()) {
-            return Result.err(aResult.error);
-        }
+    return pair(terminated(a, sep), b);
+}
 
-        const [aVal, aLen] = aResult.value;
-        const aRemaining = s.slice(aLen);
+export function terminated<T, E>(a: ParserFunction<T>, b: ParserFunction<E>): Parser<T> {
+    return pair(a, b).map(([t, _]) => t);
+}
 
-        const sepResult = required(sep)(aRemaining);
-        if (sepResult.isErr()) {
-            return sepResult.castOk();
-        }
+export function preceded<T, S>(a: ParserFunction<S>, b: ParserFunction<T>): Parser<T> {
+    return pair(a, b).map(([_, t]) => t);
+}
 
-        const [_, sepLen] = sepResult.value;
-        const sepRemaining = aRemaining.slice(sepLen);
-
-        return required(b)(sepRemaining).map(([bVal, bLen]) => [
-            [aVal, bVal],
-            aLen + sepLen + bLen,
-        ]);
-    });
+export function delimited<S, T, E>(
+    start: ParserFunction<S>,
+    parser: ParserFunction<T>,
+    end: ParserFunction<E>,
+): Parser<T> {
+    return preceded(start, terminated(parser, end));
 }

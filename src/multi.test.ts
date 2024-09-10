@@ -1,9 +1,19 @@
 import { describe, it, expect } from "@jest/globals";
-import { opt, alt, many0, many1, pair, separatedPair } from "../dist/multi.js";
+import {
+    opt,
+    alt,
+    many0,
+    many1,
+    pair,
+    separatedPair,
+    terminated,
+    delimited,
+    preceded,
+} from "../dist/multi.js";
 import { tag, uint } from "../dist/text";
 import { Result } from "../dist/result.js";
 import { Option } from "../dist/option.js";
-import { PResult } from "../dist/index.js";
+import { Parser, PResult } from "../dist/index.js";
 
 describe("opt", () => {
     const parser = opt(pair(tag("a"), tag("b")));
@@ -81,6 +91,55 @@ describe("separated pair", () => {
 
     it("matches all", () => {
         expect(parser("abcn")).toEqual(Result.ok([["a", "c"], 3]));
+    });
+
+    it("doesn't match unrelated", () => {
+        expect(parser("noco")).toEqual(PResult.expected("a"));
+    });
+
+    it("fails partial", () => {
+        expect(parser("a")).toEqual(PResult.require(PResult.expected("b"), ""));
+        expect(parser("abn")).toEqual(PResult.require(PResult.expected("c"), "n"));
+    });
+});
+
+describe("terminated", () => {
+    const parser = terminated(tag("a"), tag("b"));
+
+    it("matches and ignores second parser", () => {
+        expect(parser("abn")).toEqual(Result.ok(["a", 2]));
+    });
+
+    it("doesn't match unrelated", () => {
+        expect(parser("noco")).toEqual(PResult.expected("a"));
+    });
+
+    it("fails partial", () => {
+        expect(parser("a")).toEqual(PResult.require(PResult.expected("b"), ""));
+    });
+});
+
+describe("preceded", () => {
+    const parser = preceded(tag("a"), tag("b"));
+
+    it("matches and ignores first parser", () => {
+        expect(parser("abn")).toEqual(Result.ok(["b", 2]));
+    });
+
+    it("doesn't match unrelated", () => {
+        expect(parser("noco")).toEqual(PResult.expected("a"));
+    });
+
+    it("fails partial", () => {
+        expect(parser("a")).toEqual(PResult.require(PResult.expected("b"), ""));
+    });
+});
+
+describe("delimited", () => {
+    const parser = delimited(tag("a"), tag("b"), tag("c"));
+
+    it("matches and returns the middle parser", () => {
+        expect(parser("abcn")).toEqual(Result.ok(["b", 3]));
     });
 
     it("doesn't match unrelated", () => {
