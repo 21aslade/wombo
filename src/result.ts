@@ -1,3 +1,4 @@
+import { Option } from "./option.js";
 export type Result<T, E> = Ok<T, E> | Err<T, E>;
 export const Result = {
     ok<T, E>(t: T): Ok<T, E> {
@@ -13,6 +14,13 @@ export const Result = {
             return Result.err(e);
         }
     },
+    transpose<T, E>(r: Result<Option<T>, E>): Option<Result<T, E>> {
+        if (r.isOk()) {
+            return r.value.map<Result<T, E>>(Result.ok);
+        } else {
+            return Option.some(r.castOk());
+        }
+    },
 } as const;
 
 interface ResultBase<T, E> {
@@ -23,7 +31,10 @@ interface ResultBase<T, E> {
     and<U>(r: Result<U, E>): Result<U, E>;
     andThen<U>(f: (t: T) => Result<U, E>): Result<U, E>;
     or<U>(r: Result<U, E>): Result<T | U, E>;
-    or_else<U>(f: (e: E) => Result<U, E>): Result<T | U, E>;
+    orElse<U>(f: (e: E) => Result<U, E>): Result<T | U, E>;
+    unwrapOr<U>(u: U): T | U;
+    unwrapOrElse<U>(f: (e: E) => U): T | U;
+    ok(): Option<T>;
 }
 
 class Ok<T, E> implements ResultBase<T, E> {
@@ -66,8 +77,20 @@ class Ok<T, E> implements ResultBase<T, E> {
         return this;
     }
 
-    or_else<U>(_f: (e: E) => Result<U, E>): Result<T | U, E> {
+    orElse<U>(_f: (e: E) => Result<U, E>): Result<T | U, E> {
         return this;
+    }
+
+    unwrapOr<U>(_u: U): T | U {
+        return this.value;
+    }
+
+    unwrapOrElse<U>(_f: (e: E) => U): T | U {
+        return this.value;
+    }
+
+    ok(): Option<T> {
+        return Option.some(this.value);
     }
 }
 
@@ -111,7 +134,19 @@ class Err<T, E> implements ResultBase<T, E> {
         return r;
     }
 
-    or_else<U>(f: (e: E) => Result<U, E>): Result<U, E> {
+    orElse<U>(f: (e: E) => Result<U, E>): Result<U, E> {
         return f(this.error);
+    }
+
+    unwrapOr<U>(u: U): T | U {
+        return u;
+    }
+
+    unwrapOrElse<U>(f: (e: E) => U): T | U {
+        return f(this.error);
+    }
+
+    ok(): Option<T> {
+        return Option.none();
     }
 }

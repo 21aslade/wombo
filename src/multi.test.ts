@@ -1,8 +1,25 @@
 import { describe, it, expect } from "@jest/globals";
-import { alt, many0, many1, pair } from "../dist/multi.js";
+import { opt, alt, many0, many1, pair } from "../dist/multi.js";
 import { tag, uint } from "../dist/text";
 import { Result } from "../dist/result.js";
+import { Option } from "../dist/option.js";
 import { PResult } from "../dist/index.js";
+
+describe("opt", () => {
+    const parser = opt(pair(tag("a"), tag("b")));
+
+    it("matches", () => {
+        expect(parser("abn")).toEqual(Result.ok([Option.some(["a", "b"]), 2]));
+    });
+
+    it("matches not", () => {
+        expect(parser("n")).toEqual(Result.ok([Option.none(), 0]));
+    });
+
+    it("fails partial match", () => {
+        expect(parser("a")).toEqual(PResult.require(PResult.expected("b"), ""));
+    });
+});
 
 describe("many0", () => {
     const parser = many0(tag("a"));

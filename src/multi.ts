@@ -1,5 +1,19 @@
 import { makeParser, Parser, ParserFunction, PResult, required } from "./index.js";
+import { Option } from "./option.js";
 import { Result } from "./result.js";
+
+export function opt<T>(p: Parser<T>): Parser<Option<T>> {
+    return makeParser<Option<T>>((s) => {
+        const result = p(s);
+        if (result.isOk()) {
+            return Result.ok([Option.some(result.value[0]), result.value[1]]);
+        } else if (result.error.isOk()) {
+            return Result.ok([Option.none(), 0]);
+        } else {
+            return result.castOk();
+        }
+    });
+}
 
 export function alt<T>(...parsers: ParserFunction<T>[]): Parser<T> {
     return makeParser((s) => {

@@ -8,6 +8,20 @@ export const Option = {
     none(): None {
         return new None();
     },
+    try<T>(f: () => T): Option<T> {
+        try {
+            return Option.some(f());
+        } catch {
+            return Option.none();
+        }
+    },
+    transpose<T, E>(o: Option<Result<T, E>>): Result<Option<T>, E> {
+        if (o.isSome()) {
+            return o.value.map<Option<T>>(Option.some);
+        } else {
+            return Result.ok(Option.none());
+        }
+    },
 };
 
 interface OptionBase<T> {
