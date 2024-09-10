@@ -20,16 +20,40 @@ export const PResult = {
     },
 } as const;
 
-type Parser<T> = (s: string) => PResult<T>;
+/**
+ * Adds convenience functions like map, expect, and require to a parser function
+ * @param p the parser function to transform
+ * @returns p as a Parser<T>
+ */
+export function makeParser<T>(p: ParserFunction<T>): Parser<T> {
+    const parser = p.bind(undefined) as Parser<T>;
+    parser.map = (f) => mapped(parser, f);
+    parser.expect = (e) => expect(parser, e);
+    parser.require = () => required(parser);
+    return parser;
+}
+
+/** The type of a parser, augmented with convenience functions */
+export type Parser<T> = ParserFunction<T> & ParserExt<T>;
+
+/** The type of a parser */
+export type ParserFunction<T> = (s: string) => PResult<T>;
+
+/** Convenience functions for a parser */
+export type ParserExt<T> = {
+    map<U>(f: (t: T) => U): Parser<U>;
+    expect(expected: string): Parser<T>;
+    require(): Parser<T>;
+};
 
 export function tag(tag: string): Parser<string> {
-    return (s: string) => {
+    return makeParser((s: string) => {
         if (s.startsWith(tag)) {
             return Result.ok([tag, tag.length]);
         } else {
             return PResult.expected(tag);
         }
-    };
+    });
 }
 
 function uintPrefixLen(s: string): number {
@@ -50,7 +74,7 @@ function uintPrefixLen(s: string): number {
     return numberLength;
 }
 
-export const uint: Parser<number> = (s: string) => {
+export const uint: Parser<number> = makeParser((s: string) => {
     const len = uintPrefixLen(s);
 
     if (len === 0) {
@@ -60,10 +84,10 @@ export const uint: Parser<number> = (s: string) => {
     const numeric = s.slice(0, len);
     const parsed = parseInt(numeric);
     return Result.ok([parsed, len]);
-};
+});
 
-export function many0<T>(p: Parser<T>): Parser<T[]> {
-    return (s: string) => {
+export function many0<T>(p: ParserFunction<T>): Parser<T[]> {
+    return makeParser((s: string) => {
         let remaining = s;
         let results = [];
         do {
@@ -82,11 +106,11 @@ export function many0<T>(p: Parser<T>): Parser<T[]> {
         } while (remaining.length > 0);
 
         return Result.ok([results, s.length - remaining.length]);
-    };
+    });
 }
 
-export function many1<T>(p: Parser<T>): Parser<T[]> {
-    return (s: string) => {
+export function many1<T>(p: ParserFunction<T>): Parser<T[]> {
+    return makeParser((s: string) => {
         const matches = many0(p)(s);
 
         if (matches.isOk()) {
@@ -99,11 +123,11 @@ export function many1<T>(p: Parser<T>): Parser<T[]> {
         }
 
         return matches;
-    };
+    });
 }
 
-export function pair<A, B>(a: Parser<A>, b: Parser<B>): Parser<[A, B]> {
-    return (s) => {
+export function pair<A, B>(a: ParserFunction<A>, b: ParserFunction<B>): Parser<[A, B]> {
+    return makeParser((s) => {
         const aResult = a(s);
         if (aResult.isErr()) {
             return Result.err(aResult.error);
@@ -113,14 +137,14 @@ export function pair<A, B>(a: Parser<A>, b: Parser<B>): Parser<[A, B]> {
         const remaining = s.slice(aLen);
 
         return required(b)(remaining).map(([bVal, bLen]) => [[aVal, bVal], aLen + bLen]);
-    };
+    });
 }
 
-export function required<T>(p: Parser<T>): Parser<T> {
-    return (s) => PResult.require(p(s), s);
+export function required<T>(p: ParserFunction<T>): Parser<T> {
+    return makeParser((s) => PResult.require(p(s), s));
 }
 
-export function completed<T>(p: Parser<T>): (s: string) => Result<T, ParseError> {
+export function completed<T>(p: ParserFunction<T>): (s: string) => Result<T, ParseError> {
     return (s) => {
         const result = p(s);
         if (result.isOk()) {
@@ -139,29 +163,33 @@ export function completed<T>(p: Parser<T>): (s: string) => Result<T, ParseError>
 }
 
 export function regex(r: RegExp): Parser<string> {
-    return (s) => {
+    return makeParser((s) => {
         const result = r.exec(s);
         if (result === null || result.index !== 0) {
             return PResult.expected(r.toString());
         }
 
         return Result.ok([result[0], result[0].length]);
-    };
+    });
 }
 
-export function expect<T>(p: Parser<T>, expected: string): Parser<T> {
-    return (s) => {
+export function mapped<T, U>(p: ParserFunction<T>, f: (t: T) => U): Parser<U> {
+    return makeParser((s) => PResult.map(p(s), f));
+}
+
+export function expect<T>(p: ParserFunction<T>, expected: string): Parser<T> {
+    return makeParser((s) => {
         const result = p(s);
         if (result.isErr() && result.error.isOk()) {
             return PResult.expected(expected);
         }
 
         return result;
-    };
+    });
 }
 
-export function alt<T>(...parsers: Parser<T>[]): Parser<T> {
-    return (s) => {
+export function alt<T>(...parsers: ParserFunction<T>[]): Parser<T> {
+    return makeParser((s) => {
         let expected: Set<string> = new Set();
         for (const parser of parsers) {
             const result = parser(s);
@@ -173,5 +201,5 @@ export function alt<T>(...parsers: Parser<T>[]): Parser<T> {
         }
 
         return Result.err(Result.ok(expected));
-    };
+    });
 }

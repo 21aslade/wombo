@@ -42,6 +42,25 @@ describe("PResult", () => {
     });
 });
 
+describe("makeParser", () => {
+    const parser = tag("123");
+    test("map works", () => {
+        const mapped = parser.map(parseInt);
+        expect(mapped("123")).toEqual(Result.ok([123, 3]));
+        expect(mapped("124")).toEqual(PResult.expected("123"));
+    });
+
+    test("expect works", () => {
+        const expected = parser.expect("not 123");
+        expect(expected("abc")).toEqual(PResult.expected("not 123"));
+    });
+
+    test("require works", () => {
+        const required = parser.require();
+        expect(required("abc")).toEqual(PResult.require(PResult.expected("123"), "abc"));
+    });
+});
+
 describe("tag", () => {
     const parser = tag("abc");
     it("matches tag value", () => {
