@@ -1,4 +1,5 @@
-import { makeParser, Parser, ParserFunction, PResult, required } from "./index.js";
+import { makeParser, Parser, ParserFunction } from "./index.js";
+import { ParseResult } from "./parseResult.js";
 import { Option } from "./option.js";
 import { Result } from "./result.js";
 
@@ -6,11 +7,11 @@ export function opt<T>(p: Parser<T>): Parser<Option<T>> {
     return makeParser<Option<T>>((s) => {
         const result = p(s);
         if (result.isOk()) {
-            return Result.ok([Option.some(result.value[0]), result.value[1]]);
-        } else if (result.error.isOk()) {
-            return Result.ok([Option.none(), 0]);
+            return result.map(Option.some);
+        } else if (result.isErr() && !result.isFatal()) {
+            return ParseResult.okExpecting(Option.none(), 0, result.expected);
         } else {
-            return result.castOk();
+            return result.castOk<Option<T>>();
         }
     });
 }
@@ -20,54 +21,52 @@ export function alt<T>(...parsers: ParserFunction<T>[]): Parser<T> {
         let expected: Set<string> = new Set();
         for (const parser of parsers) {
             const result = parser(s);
-            if (result.isErr() && result.error.isOk()) {
-                result.error.value.forEach((s) => expected.add(s));
-            } else {
+            if (result.isFatal() || result.isOk()) {
                 return result;
+            } else {
+                result.expected.forEach((s) => expected.add(s));
             }
         }
 
-        return Result.err(Result.ok(expected));
+        return ParseResult.expected(...expected);
     });
 }
 
 export function many0<T>(p: ParserFunction<T>): Parser<T[]> {
-    return makeParser((s: string) => {
-        let remaining = s;
-        let results = [];
-        do {
-            const result = p(remaining);
-            if (result.isErr()) {
-                if (result.error.isErr()) {
-                    return result.castOk();
-                } else {
-                    break;
-                }
-            }
-
-            const [t, len] = result.value;
-            remaining = remaining.slice(len);
-            results.push(t);
-        } while (remaining.length > 0);
-
-        return Result.ok([results, s.length - remaining.length]);
-    });
+    return opt(many1(p)).map((t) => t.unwrapOr([]));
 }
 
 export function many1<T>(p: ParserFunction<T>): Parser<T[]> {
     return makeParser((s: string) => {
-        const matches = many0(p)(s);
-
-        if (matches.isOk()) {
-            const [results] = matches.value;
-
-            if (results.length <= 0) {
-                // always an error
-                return PResult.map(p(s), (_) => []);
+        let remaining = s;
+        let results = [];
+        let expected: Set<string>;
+        do {
+            const result = p(remaining);
+            if (result.isErr()) {
+                if (result.isFatal()) {
+                    return result.castOk();
+                } else {
+                    expected = result.expected;
+                    break;
+                }
+            } else if (result.consumed === 0) {
+                throw new Error("Attempted to call many on a zero-length parser");
             }
-        }
 
-        return matches;
+            remaining = remaining.slice(result.consumed);
+            results.push(result.result.unwrap());
+        } while (true);
+
+        if (results.length > 0) {
+            return ParseResult.okExpecting(
+                results,
+                s.length - remaining.length,
+                expected,
+            );
+        } else {
+            return ParseResult.expected(...(expected ?? []));
+        }
     });
 }
 
@@ -75,13 +74,11 @@ export function pair<A, B>(a: ParserFunction<A>, b: ParserFunction<B>): Parser<[
     return makeParser((s) => {
         const aResult = a(s);
         if (aResult.isErr()) {
-            return Result.err(aResult.error);
+            return aResult.castOk();
         }
 
-        const [aVal, aLen] = aResult.value;
-        const remaining = s.slice(aLen);
-
-        return required(b)(remaining).map(([bVal, bLen]) => [[aVal, bVal], aLen + bLen]);
+        const remaining = s.slice(aResult.consumed);
+        return aResult.and(b(remaining));
     });
 }
 

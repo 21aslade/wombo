@@ -1,12 +1,17 @@
-import { makeParser, Parser, PResult } from "./index.js";
+import { makeParser, Parser } from "./index.js";
+import { ParseResult } from "./parseResult.js";
 import { Result } from "./result.js";
+
+export const eof: Parser<void> = makeParser((s) =>
+    s === "" ? ParseResult.ok(undefined, 0) : ParseResult.expected("EOF"),
+);
 
 export function tag(tag: string): Parser<string> {
     return makeParser((s: string) => {
         if (s.startsWith(tag)) {
-            return Result.ok([tag, tag.length]);
+            return ParseResult.ok(tag, tag.length);
         } else {
-            return PResult.expected(tag);
+            return ParseResult.expected(tag);
         }
     });
 }
@@ -15,10 +20,10 @@ export function regex(r: RegExp): Parser<string> {
     return makeParser((s) => {
         const result = r.exec(s);
         if (result === null || result.index !== 0) {
-            return PResult.expected(r.toString());
+            return ParseResult.expected(r.toString());
         }
 
-        return Result.ok([result[0], result[0].length]);
+        return ParseResult.ok(result[0], result[0].length);
     });
 }
 

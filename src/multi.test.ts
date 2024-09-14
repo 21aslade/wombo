@@ -10,79 +10,95 @@ import {
     delimited,
     preceded,
 } from "../dist/multi.js";
-import { tag, uint } from "../dist/text";
+import { eof, tag, uint } from "../dist/text";
 import { Result } from "../dist/result.js";
 import { Option } from "../dist/option.js";
-import { Parser, PResult } from "../dist/index.js";
+import { ParseResult } from "../dist/parseResult.js";
 
 describe("opt", () => {
     const parser = opt(pair(tag("a"), tag("b")));
 
     it("matches", () => {
-        expect(parser("abn")).toEqual(Result.ok([Option.some(["a", "b"]), 2]));
+        expect(parser("abn")).toEqual(ParseResult.ok(Option.some(["a", "b"]), 2));
     });
 
     it("matches not", () => {
-        expect(parser("n")).toEqual(Result.ok([Option.none(), 0]));
+        expect(parser("n")).toEqual(
+            ParseResult.okExpecting(Option.none(), 0, new Set(["a"])),
+        );
     });
 
     it("fails partial match", () => {
-        expect(parser("a")).toEqual(PResult.require(PResult.expected("b"), ""));
+        expect(parser("a")).toEqual(ParseResult.fatal(1, "b"));
     });
 });
 
 describe("many0", () => {
     const parser = many0(tag("a"));
     it("matches zero", () => {
-        expect(parser("not a")).toEqual(Result.ok([[], 0]));
+        expect(parser("not a")).toEqual(ParseResult.okExpecting([], 0, new Set(["a"])));
     });
 
     it("matches one", () => {
-        expect(parser("abc")).toEqual(Result.ok([["a"], 1]));
+        expect(parser("abc")).toEqual(ParseResult.okExpecting(["a"], 1, new Set(["a"])));
     });
 
     it("matches three", () => {
-        expect(parser("aaab")).toEqual(Result.ok([["a", "a", "a"], 3]));
+        expect(parser("aaab")).toEqual(
+            ParseResult.okExpecting(["a", "a", "a"], 3, new Set(["a"])),
+        );
     });
 
     it("doesn't match break", () => {
-        expect(parser("aaba")).toEqual(Result.ok([["a", "a"], 2]));
+        expect(parser("aaba")).toEqual(
+            ParseResult.okExpecting(["a", "a"], 2, new Set(["a"])),
+        );
+    });
+
+    it("fails zero-size parser", () => {
+        expect(() => many0(eof)("")).toThrow();
     });
 });
 
 describe("many1", () => {
     const parser = many1(tag("a"));
     it("doesn't match zero", () => {
-        expect(parser("not a")).toEqual(PResult.expected("a"));
+        expect(parser("not a")).toEqual(ParseResult.expected("a"));
     });
 
     it("matches one", () => {
-        expect(parser("abc")).toEqual(Result.ok([["a"], 1]));
+        expect(parser("abc")).toEqual(ParseResult.okExpecting(["a"], 1, new Set(["a"])));
     });
 
     it("matches three", () => {
-        expect(parser("aaab")).toEqual(Result.ok([["a", "a", "a"], 3]));
+        expect(parser("aaab")).toEqual(
+            ParseResult.okExpecting(["a", "a", "a"], 3, new Set(["a"])),
+        );
     });
 
     it("doesn't match break", () => {
-        expect(parser("aaba")).toEqual(Result.ok([["a", "a"], 2]));
+        expect(parser("aaba")).toEqual(
+            ParseResult.okExpecting(["a", "a"], 2, new Set(["a"])),
+        );
+    });
+
+    it("fails zero-size parser", () => {
+        expect(() => many1(eof)("")).toThrow();
     });
 });
 
 describe("pair", () => {
     const parser = pair(tag("abc"), uint);
     it("matches pair", () => {
-        expect(parser("abc123nnn")).toEqual(Result.ok([["abc", 123], 6]));
+        expect(parser("abc123nnn")).toEqual(ParseResult.ok(["abc", 123], 6));
     });
 
     it("doesn't match just first", () => {
-        expect(parser("abcnnn")).toEqual(
-            PResult.require(PResult.expected("nonnegative integer"), "nnn"),
-        );
+        expect(parser("abcnnn")).toEqual(ParseResult.fatal(3, "nonnegative integer"));
     });
 
     it("doesn't match just second", () => {
-        expect(parser("123nnn")).toEqual(PResult.expected("abc"));
+        expect(parser("123nnn")).toEqual(ParseResult.expected("abc"));
     });
 });
 
@@ -90,16 +106,16 @@ describe("separated pair", () => {
     const parser = separatedPair(tag("a"), tag("b"), tag("c"));
 
     it("matches all", () => {
-        expect(parser("abcn")).toEqual(Result.ok([["a", "c"], 3]));
+        expect(parser("abcn")).toEqual(ParseResult.ok(["a", "c"], 3));
     });
 
     it("doesn't match unrelated", () => {
-        expect(parser("noco")).toEqual(PResult.expected("a"));
+        expect(parser("noco")).toEqual(ParseResult.expected("a"));
     });
 
     it("fails partial", () => {
-        expect(parser("a")).toEqual(PResult.require(PResult.expected("b"), ""));
-        expect(parser("abn")).toEqual(PResult.require(PResult.expected("c"), "n"));
+        expect(parser("a")).toEqual(ParseResult.fatal(1, "b"));
+        expect(parser("abn")).toEqual(ParseResult.fatal(2, "c"));
     });
 });
 
@@ -107,15 +123,15 @@ describe("terminated", () => {
     const parser = terminated(tag("a"), tag("b"));
 
     it("matches and ignores second parser", () => {
-        expect(parser("abn")).toEqual(Result.ok(["a", 2]));
+        expect(parser("abn")).toEqual(ParseResult.ok("a", 2));
     });
 
     it("doesn't match unrelated", () => {
-        expect(parser("noco")).toEqual(PResult.expected("a"));
+        expect(parser("noco")).toEqual(ParseResult.expected("a"));
     });
 
     it("fails partial", () => {
-        expect(parser("a")).toEqual(PResult.require(PResult.expected("b"), ""));
+        expect(parser("a")).toEqual(ParseResult.fatal(1, "b"));
     });
 });
 
@@ -123,15 +139,15 @@ describe("preceded", () => {
     const parser = preceded(tag("a"), tag("b"));
 
     it("matches and ignores first parser", () => {
-        expect(parser("abn")).toEqual(Result.ok(["b", 2]));
+        expect(parser("abn")).toEqual(ParseResult.ok("b", 2));
     });
 
     it("doesn't match unrelated", () => {
-        expect(parser("noco")).toEqual(PResult.expected("a"));
+        expect(parser("noco")).toEqual(ParseResult.expected("a"));
     });
 
     it("fails partial", () => {
-        expect(parser("a")).toEqual(PResult.require(PResult.expected("b"), ""));
+        expect(parser("a")).toEqual(ParseResult.fatal(1, "b"));
     });
 });
 
@@ -139,16 +155,16 @@ describe("delimited", () => {
     const parser = delimited(tag("a"), tag("b"), tag("c"));
 
     it("matches and returns the middle parser", () => {
-        expect(parser("abcn")).toEqual(Result.ok(["b", 3]));
+        expect(parser("abcn")).toEqual(ParseResult.ok("b", 3));
     });
 
     it("doesn't match unrelated", () => {
-        expect(parser("noco")).toEqual(PResult.expected("a"));
+        expect(parser("noco")).toEqual(ParseResult.expected("a"));
     });
 
     it("fails partial", () => {
-        expect(parser("a")).toEqual(PResult.require(PResult.expected("b"), ""));
-        expect(parser("abn")).toEqual(PResult.require(PResult.expected("c"), "n"));
+        expect(parser("a")).toEqual(ParseResult.fatal(1, "b"));
+        expect(parser("abn")).toEqual(ParseResult.fatal(2, "c"));
     });
 });
 
@@ -160,16 +176,16 @@ describe("alt", () => {
     );
 
     it("matches any", () => {
-        expect(parser("ab")).toEqual(Result.ok([["a", "b"], 2]));
-        expect(parser("bc")).toEqual(Result.ok([["b", "c"], 2]));
-        expect(parser("cd")).toEqual(Result.ok([["c", "d"], 2]));
+        expect(parser("ab")).toEqual(ParseResult.ok(["a", "b"], 2));
+        expect(parser("bc")).toEqual(ParseResult.ok(["b", "c"], 2));
+        expect(parser("cd")).toEqual(ParseResult.ok(["c", "d"], 2));
     });
 
     it("doesn't match something else", () => {
-        expect(parser("no")).toEqual(Result.err(Result.ok(new Set(["a", "b", "c"]))));
+        expect(parser("no")).toEqual(ParseResult.expected("a", "b", "c"));
     });
 
     it("doesn't continue required", () => {
-        expect(parser("ac")).toEqual(PResult.require(PResult.expected("b"), "c"));
+        expect(parser("ac")).toEqual(ParseResult.fatal(1, "b"));
     });
 });
