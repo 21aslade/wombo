@@ -32,6 +32,7 @@ interface ResultBase<T, E> {
     andThen<U>(f: (t: T) => Result<U, E>): Result<U, E>;
     or<U>(r: Result<U, E>): Result<T | U, E>;
     orElse<U>(f: (e: E) => Result<U, E>): Result<T | U, E>;
+    unwrap(): T;
     unwrapOr<U>(u: U): T | U;
     unwrapOrElse<U>(f: (e: E) => U): T | U;
     ok(): Option<T>;
@@ -79,6 +80,10 @@ class Ok<T, E> implements ResultBase<T, E> {
 
     orElse<U>(_f: (e: E) => Result<U, E>): Result<T | U, E> {
         return this;
+    }
+
+    unwrap(): T {
+        return this.value;
     }
 
     unwrapOr<U>(_u: U): T | U {
@@ -136,6 +141,10 @@ class Err<T, E> implements ResultBase<T, E> {
 
     orElse<U>(f: (e: E) => Result<U, E>): Result<U, E> {
         return f(this.error);
+    }
+
+    unwrap(): T {
+        throw new Error("Attempted to unwrap Err value");
     }
 
     unwrapOr<U>(u: U): T | U {

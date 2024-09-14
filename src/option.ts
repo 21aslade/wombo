@@ -35,6 +35,7 @@ interface OptionBase<T> {
     andThen<U>(f: (t: T) => Option<U>): Option<U>;
     or<U = T>(other: Option<U>): Option<T | U>;
     orElse<U = T>(f: () => Option<U>): Option<T | U>;
+    unwrap(): T;
     unwrapOr<U = T>(other: U): T | U;
     unrapOrElse<U = T>(f: () => U): T | U;
     okOr<E>(error: E): Result<T, E>;
@@ -67,6 +68,9 @@ class Some<T> implements OptionBase<T> {
     }
     orElse<U = T>(_f: () => Option<U>): Option<T | U> {
         return this;
+    }
+    unwrap(): T {
+        return this.value;
     }
     unwrapOr<U = T>(_other: U): T | U {
         return this.value;
@@ -105,6 +109,9 @@ class None implements OptionBase<never> {
     }
     orElse<U = never>(f: () => Option<U>): Option<U> {
         return f();
+    }
+    unwrap(): never {
+        throw new Error("Attempted to unwrap None value");
     }
     unwrapOr<U = never>(other: U): U {
         return other;
