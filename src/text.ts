@@ -1,6 +1,5 @@
 import { makeParser, Parser } from "./index.js";
 import { ParseResult } from "./parseResult.js";
-import { Result } from "./result.js";
 
 export const eof: Parser<void> = makeParser((s) =>
     s === "" ? ParseResult.ok(undefined, 0) : ParseResult.expected("EOF"),

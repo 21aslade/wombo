@@ -11,7 +11,6 @@ import {
     preceded,
 } from "../dist/multi.js";
 import { eof, tag, uint } from "../dist/text";
-import { Result } from "../dist/result.js";
 import { Option } from "../dist/option.js";
 import { ParseResult } from "../dist/parseResult.js";
 
