@@ -3,7 +3,7 @@ import { ParseResult } from "./parseResult.js";
 import { Option } from "./option.js";
 import { Result } from "./result.js";
 
-export function opt<T>(p: Parser<T>): Parser<Option<T>> {
+export function opt<T>(p: ParserFunction<T>): Parser<Option<T>> {
     return makeParser<Option<T>>((s) => {
         const result = p(s);
         if (result.isOk()) {
