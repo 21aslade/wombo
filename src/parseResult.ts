@@ -60,11 +60,7 @@ export class ParseResult<T> {
                     : new Set([...this.expected, ...other.expected]);
             return new ParseResult(result, this.consumed + other.consumed, expected);
         } else {
-            return new ParseResult(
-                Result.err(undefined),
-                this.consumed,
-                new Set(this.expected),
-            );
+            return this.castOk();
         }
     }
 
