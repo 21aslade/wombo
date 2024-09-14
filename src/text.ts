@@ -5,7 +5,7 @@ export const eof: Parser<void> = makeParser((s) =>
     s === "" ? ParseResult.ok(undefined, 0) : ParseResult.expected("EOF"),
 );
 
-export function tag(tag: string): Parser<string> {
+export function tag<S extends string = string>(tag: S): Parser<S> {
     return makeParser((s: string) => {
         if (s.startsWith(tag)) {
             return ParseResult.ok(tag, tag.length);

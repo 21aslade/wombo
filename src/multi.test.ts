@@ -180,7 +180,7 @@ describe("delimited", () => {
 });
 
 describe("alt", () => {
-    const parser = alt(
+    const parser = alt<[string, string]>(
         pair(tag("a"), tag("b")),
         pair(tag("b"), tag("c")),
         pair(tag("c"), tag("d")),
