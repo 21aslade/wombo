@@ -1,8 +1,11 @@
 {
     "name": "wombo",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "description": "A basic parser combinator library. Made as a library for my CS260 class",
-    "main": "dist/index.js",
+    "exports": {
+        ".": "./dist/index.js",
+        "./*": "./dist/*.js"
+    },
     "types": "dist/index.d.ts",
     "type": "module",
     "author": "Andrew Slade",
