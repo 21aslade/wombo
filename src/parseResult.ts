@@ -55,7 +55,7 @@ export class ParseResult<T> {
                 this.result.map((a) => [a, b]),
             );
             const expected: Set<string> =
-                other.isOk() || other.isFatal()
+                other.consumed > 0
                     ? other.expected
                     : new Set([...this.expected, ...other.expected]);
             return new ParseResult(result, this.consumed + other.consumed, expected);

@@ -102,6 +102,16 @@ describe("pair", () => {
     it("doesn't match just second", () => {
         expect(parser("123nnn")).toEqual(ParseResult.expected("abc"));
     });
+
+    it("retains expected on zero-size match", () => {
+        expect(pair(many1(tag("abc")), many0(uint))("abc")).toEqual(
+            ParseResult.okExpecting(
+                [["abc"], []],
+                3,
+                new Set(["abc", "nonnegative integer"]),
+            ),
+        );
+    });
 });
 
 describe("separated pair", () => {
