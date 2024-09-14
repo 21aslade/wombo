@@ -54,9 +54,10 @@ export class ParseResult<T> {
             const result: Result<[T, U], void> = other.result.andThen((b) =>
                 this.result.map((a) => [a, b]),
             );
-            const expected: Set<string> = other.result.isOk()
-                ? new Set()
-                : new Set(other.expected);
+            const expected: Set<string> =
+                other.isOk() || other.isFatal()
+                    ? other.expected
+                    : new Set([...this.expected, ...other.expected]);
             return new ParseResult(result, this.consumed + other.consumed, expected);
         } else {
             return new ParseResult(

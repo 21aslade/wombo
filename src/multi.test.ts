@@ -88,13 +88,15 @@ describe("many1", () => {
 });
 
 describe("pair", () => {
-    const parser = pair(tag("abc"), uint);
+    const parser = pair(many1(tag("abc")), uint);
     it("matches pair", () => {
-        expect(parser("abc123nnn")).toEqual(ParseResult.ok(["abc", 123], 6));
+        expect(parser("abc123nnn")).toEqual(ParseResult.ok([["abc"], 123], 6));
     });
 
     it("doesn't match just first", () => {
-        expect(parser("abcnnn")).toEqual(ParseResult.fatal(3, "nonnegative integer"));
+        expect(parser("abcnnn")).toEqual(
+            ParseResult.fatal(3, "nonnegative integer", "abc"),
+        );
     });
 
     it("doesn't match just second", () => {
@@ -103,10 +105,10 @@ describe("pair", () => {
 });
 
 describe("separated pair", () => {
-    const parser = separatedPair(tag("a"), tag("b"), tag("c"));
+    const parser = separatedPair(many1(tag("a")), many1(tag("b")), tag("c"));
 
     it("matches all", () => {
-        expect(parser("abcn")).toEqual(ParseResult.ok(["a", "c"], 3));
+        expect(parser("abcn")).toEqual(ParseResult.ok([["a"], "c"], 3));
     });
 
     it("doesn't match unrelated", () => {
@@ -114,16 +116,16 @@ describe("separated pair", () => {
     });
 
     it("fails partial", () => {
-        expect(parser("a")).toEqual(ParseResult.fatal(1, "b"));
-        expect(parser("abn")).toEqual(ParseResult.fatal(2, "c"));
+        expect(parser("a")).toEqual(ParseResult.fatal(1, "b", "a"));
+        expect(parser("abn")).toEqual(ParseResult.fatal(2, "c", "b"));
     });
 });
 
 describe("terminated", () => {
-    const parser = terminated(tag("a"), tag("b"));
+    const parser = terminated(many1(tag("a")), tag("b"));
 
     it("matches and ignores second parser", () => {
-        expect(parser("abn")).toEqual(ParseResult.ok("a", 2));
+        expect(parser("abn")).toEqual(ParseResult.ok(["a"], 2));
     });
 
     it("doesn't match unrelated", () => {
@@ -131,12 +133,12 @@ describe("terminated", () => {
     });
 
     it("fails partial", () => {
-        expect(parser("a")).toEqual(ParseResult.fatal(1, "b"));
+        expect(parser("a")).toEqual(ParseResult.fatal(1, "b", "a"));
     });
 });
 
 describe("preceded", () => {
-    const parser = preceded(tag("a"), tag("b"));
+    const parser = preceded(many1(tag("a")), tag("b"));
 
     it("matches and ignores first parser", () => {
         expect(parser("abn")).toEqual(ParseResult.ok("b", 2));
@@ -147,15 +149,15 @@ describe("preceded", () => {
     });
 
     it("fails partial", () => {
-        expect(parser("a")).toEqual(ParseResult.fatal(1, "b"));
+        expect(parser("a")).toEqual(ParseResult.fatal(1, "b", "a"));
     });
 });
 
 describe("delimited", () => {
-    const parser = delimited(tag("a"), tag("b"), tag("c"));
+    const parser = delimited(many1(tag("a")), many1(tag("b")), tag("c"));
 
     it("matches and returns the middle parser", () => {
-        expect(parser("abcn")).toEqual(ParseResult.ok("b", 3));
+        expect(parser("abcn")).toEqual(ParseResult.ok(["b"], 3));
     });
 
     it("doesn't match unrelated", () => {
@@ -163,8 +165,8 @@ describe("delimited", () => {
     });
 
     it("fails partial", () => {
-        expect(parser("a")).toEqual(ParseResult.fatal(1, "b"));
-        expect(parser("abn")).toEqual(ParseResult.fatal(2, "c"));
+        expect(parser("a")).toEqual(ParseResult.fatal(1, "b", "a"));
+        expect(parser("abn")).toEqual(ParseResult.fatal(2, "c", "b"));
     });
 });
 
