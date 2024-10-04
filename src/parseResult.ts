@@ -58,7 +58,7 @@ export class ParseResult<T> {
             } else {
                 return new ParseResult(
                     Result.err(undefined),
-                    this.consumed,
+                    0,
                     new Set(this.result.error),
                 );
             }
