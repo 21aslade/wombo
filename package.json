@@ -11,7 +11,7 @@
     "author": "Andrew Slade",
     "license": "MIT",
     "scripts": {
-        "prepare": "npx build",
+        "prepare": "npm run build",
         "test": "tsc && jest",
         "build": "tsc"
     },
