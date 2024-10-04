@@ -44,7 +44,8 @@ export function many1<T>(p: ParserFunction<T>): Parser<T[]> {
             const result = p(remaining);
             if (result.isErr()) {
                 if (result.isFatal()) {
-                    return result.castOk();
+                    result.consumed += s.length - remaining.length;
+                    return result.castOk<T[]>();
                 } else {
                     expected = result.expected;
                     break;

@@ -84,6 +84,11 @@ describe("many1", () => {
     it("fails zero-size parser", () => {
         expect(() => many1(eof)("")).toThrow();
     });
+
+    it("updates fatal error consumed", () => {
+        const parser = many1(pair(tag("a"), tag("b")));
+        expect(parser("abababa")).toEqual(ParseResult.fatal(7, "b"));
+    });
 });
 
 describe("pair", () => {
