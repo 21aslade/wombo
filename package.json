@@ -11,6 +11,7 @@
     "author": "Andrew Slade",
     "license": "MIT",
     "scripts": {
+        "prepare": "tsc",
         "test": "tsc && jest",
         "build": "tsc",
         "prepublish": "build"
