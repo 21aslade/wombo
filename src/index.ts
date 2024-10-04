@@ -12,6 +12,7 @@ export function makeParser<T>(p: ParserFunction<T>): Parser<T> {
     const parser = p.bind(undefined) as Parser<T>;
     parser.map = (f) => mapped(parser, f);
     parser.expect = (e) => expected(parser, e);
+    parser.tryMap = (f) => tryMapped(parser, f);
     return parser;
 }
 
@@ -24,6 +25,7 @@ export type ParserFunction<T> = (s: string) => ParseResult<T>;
 /** Convenience functions for a parser */
 export type ParserExt<T> = {
     map<U>(f: (t: T) => U): Parser<U>;
+    tryMap<U>(f: (t: T) => Result<U, string>): Parser<U>;
     expect(expected: string): Parser<T>;
 };
 
@@ -33,6 +35,13 @@ export function completed<T>(p: ParserFunction<T>): (s: string) => Result<T, Par
 
 export function mapped<T, U>(p: ParserFunction<T>, f: (t: T) => U): Parser<U> {
     return makeParser((s) => p(s).map(f));
+}
+
+export function tryMapped<T, U>(
+    p: ParserFunction<T>,
+    f: (t: T) => Result<U, string>,
+): Parser<U> {
+    return makeParser((s) => p(s).tryMap(f));
 }
 
 export function expected<T>(p: ParserFunction<T>, expected: string): Parser<T> {

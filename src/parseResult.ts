@@ -1,3 +1,4 @@
+import { Option } from "./option.js";
 import { Result } from "./result.js";
 
 export class ParseResult<T> {
@@ -47,6 +48,23 @@ export class ParseResult<T> {
 
     map<U>(f: (t: T) => U): ParseResult<U> {
         return new ParseResult(this.result.map(f), this.consumed, this.expected);
+    }
+
+    tryMap<U>(f: (t: T) => Result<U, string>): ParseResult<U> {
+        if (this.result.isOk()) {
+            const result = f(this.result.value);
+            if (result.isOk()) {
+                return new ParseResult(result.castErr(), this.consumed, this.expected);
+            } else {
+                return new ParseResult(
+                    Result.err(undefined),
+                    this.consumed,
+                    new Set(this.result.error),
+                );
+            }
+        } else {
+            return this.castOk();
+        }
     }
 
     and<U>(other: ParseResult<U>): ParseResult<[T, U]> {
