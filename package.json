@@ -11,10 +11,9 @@
     "author": "Andrew Slade",
     "license": "MIT",
     "scripts": {
-        "prepare": "tsc",
+        "prepare": "npx build",
         "test": "tsc && jest",
-        "build": "tsc",
-        "prepublish": "build"
+        "build": "tsc"
     },
     "devDependencies": {
         "@babel/core": "^7.25.2",
