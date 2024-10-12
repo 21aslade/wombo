@@ -1,5 +1,5 @@
 import { describe, it, expect } from "@jest/globals";
-import { tag, regex, uint, int, hex, signedHex } from "../dist/text.js";
+import { tag, regex, uint, int, hex } from "../dist/text.js";
 import { ParseResult } from "../dist/parseResult.js";
 
 describe("tag", () => {
@@ -84,7 +84,7 @@ describe("int", () => {
     });
 });
 
-describe("uhex", () => {
+describe("hex", () => {
     it("matches positive", () => {
         expect(hex("3420abcdefn")).toEqual(ParseResult.ok(0x3420abcdef, 10));
     });
@@ -94,11 +94,11 @@ describe("uhex", () => {
     });
 
     it("doesn't match negative", () => {
-        expect(hex("-5")).toEqual(ParseResult.expected("nonnegative hexadecimal"));
+        expect(hex("-5")).toEqual(ParseResult.expected("hexadecimal"));
     });
 
-    it("doesn't match zero prefix", () => {
-        expect(hex("0123")).toEqual(ParseResult.expected("nonnegative hexadecimal"));
+    it("matches zero prefix", () => {
+        expect(hex("0123")).toEqual(ParseResult.ok(0x123, 4));
     });
 
     it("matches zero", () => {
@@ -106,32 +106,6 @@ describe("uhex", () => {
     });
 
     it("doesn't match whitespace", () => {
-        expect(hex(" 123")).toEqual(ParseResult.expected("nonnegative hexadecimal"));
-    });
-});
-
-describe("hex", () => {
-    it("matches positive", () => {
-        expect(signedHex("3420abcdefn")).toEqual(ParseResult.ok(0x3420abcdef, 10));
-    });
-
-    it("doesn't include .", () => {
-        expect(signedHex("321.10")).toEqual(ParseResult.ok(0x321, 3));
-    });
-
-    it("matches negative", () => {
-        expect(signedHex("-5")).toEqual(ParseResult.ok(-0x5, 2));
-    });
-
-    it("doesn't match zero prefix", () => {
-        expect(signedHex("0123")).toEqual(ParseResult.expected("hexadecimal"));
-    });
-
-    it("matches zero", () => {
-        expect(signedHex("0")).toEqual(ParseResult.ok(0, 1));
-    });
-
-    it("doesn't match whitespace", () => {
-        expect(signedHex(" 123")).toEqual(ParseResult.expected("hexadecimal"));
+        expect(hex(" 123")).toEqual(ParseResult.expected("hexadecimal"));
     });
 });

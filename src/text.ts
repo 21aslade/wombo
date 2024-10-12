@@ -34,10 +34,6 @@ export const int: Parser<number> = regex(/-?[1-9]\d*|-?0(?!\d)/)
     .map(parseInt)
     .expect("integer");
 
-export const hex: Parser<number> = regex(/[1-9A-Fa-f][0-9A-Fa-f]*|0(?!\d)/)
-    .map((s) => parseInt(s, 16))
-    .expect("nonnegative hexadecimal");
-
-export const signedHex: Parser<number> = regex(/-?[1-9A-Fa-f][0-9A-Fa-f]*|-?0(?!\d)/)
+export const hex: Parser<number> = regex(/[0-9A-Fa-f]+/)
     .map((s) => parseInt(s, 16))
     .expect("hexadecimal");
