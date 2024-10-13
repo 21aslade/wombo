@@ -51,7 +51,8 @@ export function many1<T>(p: ParserFunction<T>): Parser<T[]> {
                     break;
                 }
             } else if (result.consumed === 0) {
-                throw new Error("Attempted to call many on a zero-length parser");
+                expected = new Set([]);
+                break;
             }
 
             remaining = remaining.slice(result.consumed);
